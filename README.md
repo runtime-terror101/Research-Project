@@ -1,7 +1,7 @@
 SCellBow
 ====
 
-  Visit [https://debsinha.shinyapps.io/dropClust/](https://debsinha.shinyapps.io/dropClust/) for the online version.
+  This is a long description
 
    -   [Installation](#desktop-installation)
    -   [Tutorial](#vignette-tutorial)
@@ -19,14 +19,13 @@ SCellBow
 
 
 
-Desktop Installation
+Installation
 ===============
 
-The developer version of the R package can be installed with the following R commands:
+The developer version of the python package can be installed with the following commands:
 
-```python
-library(devtools)
-install_github("debsin/dropClust", dependencies = T)
+```
+pip install -i https://test.pypi.org/simple/ SCellBOW==0.0.1
 ```
 
 Vignette tutorial
