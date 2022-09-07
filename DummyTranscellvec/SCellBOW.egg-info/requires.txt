@@ -1,0 +1,11 @@
+gensim
+leidenalg
+matplotlib
+numpy
+pandas
+scanpy
+umap
+nltk
+datetime
+sklearn
+tqdm
