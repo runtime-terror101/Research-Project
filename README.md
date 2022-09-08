@@ -5,17 +5,13 @@ SCellBow
 
    -   [Installation](#desktop-installation)
    -   [Tutorial](#vignette-tutorial)
-       -  [Setting-up](#setting-up-directories)
-       -  [Loading data](#loading-data)
+       -  [Class Initialisation](#class-initialisation)
        -  [Pre-processing](#pre-processing)
-       -  [Sampling](#structure-preserving-sampling)
+       -  [Loading data](#setting-source-and-target-data)
        -  [Clustering](#clustering)
        -  [Visualizing](#visualizing-clusters)
        -  [Phenotype Algebra](#phenotype-algebra)
        -  [Differential gene analysis](#find-cluster-specific-differentially-expressed-genes)
-       -  [Plot marker genes](#plot-hand-picked-marker-genes)
-       -  [Draw heatmap](#draw-heatmap)
-       -  [Integrative Analysis](#integrative-analysis)
 
 
 
@@ -28,31 +24,19 @@ The developer version of the python package can be installed with the following 
 pip install -i https://test.pypi.org/simple/ SCellBOW==0.0.1
 ```
 
+
+
 Vignette tutorial
 ------------------
 This vignette uses a small data set from the 10X website (3K PBMC dataset [here](http://cf.10xgenomics.com/samples/cell-exp/1.1.0/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz) ) to demonstrate a standard pipeline. This vignette can be used as a tutorial as well.
 
-Setting up directories
-----------------------
 
+Class Initialisation
+------------------
 ```python
-library(dropClust)
-set.seed(0)
+scb = SCellBOW(read_path, write_path)
 ```
 
-Loading data
-------------
-
-dropClust loads UMI count expression data from three input files. The files follow the same structure as the datasets available from the 10X website, i.e.:
-
--   count matrix file in sparse format
--   transcriptome identifiers as a TSV file and
--   gene identifiers as a TSV file
-
-``` python
-# Load Data, path contains decompressed files 
-sce <-readfiles(path = "C:/Projects/dropClust/data/pbmc3k/hg19/")
-```
 
 Pre-processing
 --------------
@@ -61,38 +45,24 @@ dropClust performs pre-processing to remove poor quality cells and genes. dropCl
 Cells are filtered based on the total UMI count in a cell specified by parameter `min_count`.  Poor quality genes are removed based on the minimum number of cells `min_count` with expressions above a given threshold `min_count`. 
 
 ``` python
-# Filter poor quality cells.  A threshold th corresponds to the total count of a cell.
-sce<-FilterCells(sce)
-sce<-FilterGenes(sce)
+adata_source = scb.preprocessing(path, min_genes, min_cells, target_sum, n_top_genes, max_value)
+adata_target = scb.preprocessing(path, min_genes, min_cells, target_sum, n_top_genes, max_value)
 ```
 
-### Data normalization and removing poor quality genes
+Setting source and target data
+-----------------------
 
-Count normalization is then performed with the good quality genes only. Normalized expression values is computed on the raw count data in a SingleCellExperiment object, using the median normalized total count.
+dropClust loads UMI count expression data from three input files. The files follow the same structure as the datasets available from the 10X website, i.e.:
 
-```python
-sce<-CountNormalize(sce)
-
-```
-### Selecting highly variable genes 
-Further gene selection is carried out by ranking the genes based on its dispersion index. 
-
-```python
-# Select Top Dispersed Genes by setting ngenes_keep.
-sce<-RankGenes(sce, ngenes_keep = 1000)
-```
-
-
-Structure Preserving Sampling
------------------------------
-
-Primary clustering is performed in a fast manner to estimate a gross structure of the data. Each of these clusters is then sampled to fine tune the clustering process.
+-   count matrix file in sparse format
+-   transcriptome identifiers as a TSV file and
+-   gene identifiers as a TSV file
 
 ``` python
-
-sce<-Sampling(sce)
-
+scb.set_source_data(adata_source)
+scb.set_target_data(adata_target)
 ```
+
 
 Gene selection based on PCA
 ---------------------------
@@ -151,73 +121,6 @@ write.csv(DE_genes_all$genes,
 ```
 
 
-Plot hand picked marker genes
------------------------------
-
-``` python
-
-marker_genes = c("S100A8", "GNLY", "PF4")
-
-p<-PlotMarkers(sce, marker_genes)
-```
-![](doc/vignette_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
-
-
-
-Heat map of top DE genes from each cluster
-------------------------------------------
-
-``` python
-# Draw heatmap
-p<-PlotHeatmap(sce, DE_res = DE_genes_all$DE_res,nDE = 10)
-
-print(p)
-```
-![](doc/vignette_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
-
-
-Integrative analysis
-================
-
-## Loading datasets
-
-Each dataset represents one batch and must be a `SingleCellExperiment` object. The objects are are merged by passing a list in the next step.
-
-``` python
-
-library(dropClust)
-load(url("https://raw.githubusercontent.com/LuyiTian/CellBench_data/master/data/sincell_with_class.RData"))
-
-objects = list()
-
-objects[[1]] = sce_sc_10x_qc
-
-objects[[2]] = sce_sc_CELseq2_qc
-
-objects[[3]] = sce_sc_Dropseq_qc
-```
-
-## Merge datasets using dropClust
-
-Datasets can be merged in two ways: using a set of DE genes from each
-batch or, using the union of the sets of highly variable genes from each
-batch.
-
-
-## Perform correction and dimension reduction
-
-``` python
-set.seed(1)
-dc.corr <-  Correction(merged_data,  method="default", close_th = 0.1, cells_th = 0.1,
-                       components = 10, n_neighbors = 30,  min_dist = 1)
-```
-
-## Perform Clustering on integrated dimensions
-
-``` python
-dc.corr = Cluster(dc.corr,method = "kmeans",centers = 3)
-
-```
 
 ## Visualizing clusters
 
@@ -242,12 +145,3 @@ mnn.corr = Cluster(mnn.corr,method = "kmeans",centers = 3)
 ScatterPlot(mnn.corr, title = "Clusters")
 ```
 
-![](doc/batchCorrection_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
-
-## Marker discovery from the merged dataset
-
-``` python
-de<-FindMarkers(dc.corr,q_th = 0.001, lfc_th = 1.2,nDE = 10)
-de$genes.df
-
-```
