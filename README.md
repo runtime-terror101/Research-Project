@@ -3,20 +3,20 @@ SCellBow
 
   This is a long description
 
-   -   [Installation](#desktop-installation)
+   -   [Installation](#installation)
    -   [Tutorial](#vignette-tutorial)
        -  [Class Initialisation](#class-initialisation)
        -  [Pre-processing](#pre-processing)
        -  [Loading data](#setting-source-and-target-data)
-       -  [Clustering](#clustering)
-       -  [Visualizing](#visualizing-clusters)
+       -  [Model Creation](#model-creation)
+       -  [Clustering and Visualisation](#clustering-and-visualisation)
        -  [Phenotype Algebra](#phenotype-algebra)
        -  [Differential gene analysis](#find-cluster-specific-differentially-expressed-genes)
 
 
 
 Installation
-===============
+=============
 
 The developer version of the python package can be installed with the following commands:
 
@@ -50,7 +50,7 @@ adata_target = scb.preprocessing(path, min_genes, min_cells, target_sum, n_top_g
 ```
 
 Setting source and target data
------------------------
+-------------------------------
 
 dropClust loads UMI count expression data from three input files. The files follow the same structure as the datasets available from the 10X website, i.e.:
 
@@ -63,21 +63,15 @@ scb.set_source_data(adata_source)
 scb.set_target_data(adata_target)
 ```
 
-
-Gene selection based on PCA
----------------------------
-Another gene selection is performed to reduce the number of dimensions. PCA is used to identify genes affecting major components. 
-
-``` python
-
-# Find PCA top 200 genes. This may take some time.
-sce<-RankPCAGenes(sce)
-
+Model Creation
+---------------
+```python
+scb.SCellBOW_source(epochs, vec_size)
 ```
 
 
-Clustering
-------------------
+Clustering and Visualisation
+--------------------------
 
 ### Fine tuning the clustering process
 
@@ -85,63 +79,20 @@ By default best-fit, Louvain based clusters are returned. However, the user can 
 
 
 ``` python
-# When `method = hclust`
-# Adjust Minimum cluster size with argument minClusterSize (default = 20)
-# Adjust tree cut with argument level deepSplit (default = 3), higher value produces more clusters.
-sce<-Cluster(sce, method = "default", conf = 0.8)
+scb.SCellBOW_test(self, svd_solver, n_neighbors, n_pcs, resolution)
 ```
 
-Visualizing clusters
---------------------
+Phenotype Algebra
+----------------------------------------------------
 
-Compute 2D embeddings for samples followed by post-hoc clustering.
-
-``` python
-
-sce<-PlotEmbedding(sce, embedding = "umap", spread = 10, min_dist = 0.1)
-
-plot_data = data.frame("Y1" = reducedDim(sce,"umap")[,1], Y2 = reducedDim(sce, "umap")[,2], color = sce$ClusterIDs)
-
-ScatterPlot(plot_data,title = "Clusters")
-```
-
-![](doc/vignette_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 Find cluster specific Differentially Expressed genes
 ----------------------------------------------------
 
 ``` python
 
-DE_genes_all = FindMarkers(sce, selected_clusters=NA, lfc_th = 1, q_th =0.001, nDE=30)
-
-write.csv(DE_genes_all$genes, 
-          file = file.path(tempdir(),"ct_genes.csv"),
-          quote = FALSE)
+????????????
 
 ```
 
-
-
-## Visualizing clusters
-
-Compute 2D embeddings for samples followed by post-hoc clustering.
-
-``` python
-ScatterPlot(dc.corr, title = "Clusters")
-```
-
-![Batch corrected dropClust based
-Clustering.](doc/batchCorrection_files/figure-gfm/unnamed-chunk-5-1.png)
-
-## Optional Batch correction
-
-Users can use `fastmnn` method for batchcorrection. Specific arguments of fastmnn can also be passed through the `Correction` module.
-
-``` python
-merged_data.fastmnn<-Merge(all.objects,use.de.genes = FALSE)
-set.seed(1)
-mnn.corr <-  Correction(merged_data.fastmnn,  method="fastmnn", d = 10)
-mnn.corr = Cluster(mnn.corr,method = "kmeans",centers = 3)
-ScatterPlot(mnn.corr, title = "Clusters")
-```
 
